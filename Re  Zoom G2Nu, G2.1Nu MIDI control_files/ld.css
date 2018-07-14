@@ -1,0 +1,48 @@
+body {
+	font-family: sans-serif;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+#donate {
+	font-size: 80%;
+	font-weight: bolder;
+}
+
+hr {
+	border: 1px solid #ccc;
+}
+
+hr+hr {
+	display: none;
+}
+
+#ads {
+	float: left;
+	padding-top: 7em;
+	width: 170px;
+}
+
+#msg, #idx {
+	margin-left: 180px;
+}
+
+#msg {
+	padding-left: 20px;
+}
+
+#msg>hr
+{
+	margin-left: -20px;
+}
+
+/* leave only the mailheader label bold */
+li>strong+strong {
+	font-weight: normal;
+}
