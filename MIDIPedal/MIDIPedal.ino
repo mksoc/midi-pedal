@@ -2,23 +2,27 @@
 
 #define SIZEOF_ARRAY(arr) (sizeof(arr) / sizeof(arr[0])) //to compute sizeof or array passed to function
 
-//Commands declarations
+/*Commands declarations*/
 const byte patchChange = 0xc0;
 const byte tunerOn[] = {0xb0, 0x4a, 64}; //command sequence to turn on tuner
 const byte tunerOff[] = {0xb0, 0x4a, 63}; //command sequence to turn off tuner
-const byte idReq[] = {0xf0, 0x7e, 0x00, 0x06, 0x01, 0xf7}; //command sequence to request ID
-const byte testCommand[] = {0xf0,0x52,0x00,0x5f,0x29,0xf7};
+const byte idReq[] = {0xF0, 0x7E, 0x00, 0x06, 0x01, 0xF7}; //command sequence to request ID
+const byte enableEcho[] = {0xF0, 0x52, 0x00, 0x5F, 0x50, 0xF7}; //enable messages from the Zoom
 
-//Tuner variables
+/*Tuner variables*/
 const int tunerPin = 2; //pin for tuner button, active high
 Button tunerButton = Button(tunerPin, false, false, 25);
 bool tunerActive = false; //tuner status
 
 void setup() 
 {
-  //initialize serial @ MIDI baudrate 
-  //WARNING: serial does not work if you pass a variable to begin() --> must be a number!!
+  /*Initialize serial @ MIDI baudrate 
+  WARNING: serial does not work if you pass a variable to begin() --> must be a number!!*/
   Serial.begin(115200); 
+
+  /*Send preamble to enable messages from the Zoom*/
+  sendMIDI(idReq, SIZEOF_ARRAY(idReq));
+  sendMIDI(enableEcho, SIZEOF_ARRAY(enableEcho));
 }
 
 void loop() 
