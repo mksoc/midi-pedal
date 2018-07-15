@@ -6,7 +6,7 @@
 /*Commands declarations*/
 const byte patchChange = 0xC0;
 const byte tunerOn[] = {0xB0, 0x4A, 0x40}; //command sequence to turn on tuner
-const byte tunerOff[] = {0xb0, 0x4a, 0x3F}; //command sequence to turn off tuner
+const byte tunerOff[] = {0xB0, 0x4A, 0x3F}; //command sequence to turn off tuner
 const byte idReq[] = {0xF0, 0x7E, 0x00, 0x06, 0x01, 0xF7}; //command sequence to request ID
 const byte enableEcho[] = {0xF0, 0x52, 0x00, 0x5F, 0x50, 0xF7}; //enable messages from the Zoom
 const byte infoReq[] = {0xF0, 0x52, 0x00, 0x5F, 0x33, 0xF7}; //request patch info
@@ -36,11 +36,11 @@ void loop()
   }*/
   
   delay(2000);
-  incrementPatch();
+  decrementPatch();
   
 }
 
-/* sendMIDI overloads */
+/* sendMIDI() overloads */
 void sendMIDI(byte *command, size_t len) 
 {
   for (int i = 0; i < len; i++)
@@ -55,13 +55,7 @@ void sendMIDI(byte command, byte data)
   Serial.write(data);
 }
 
-/*void sendMIDI(byte command, byte data1, byte data2)
-{
-  Serial.write(command);
-  Serial.write(data1);
-  Serial.write(data2);
-}*/
-/*===================*/
+/*======================*/
 
 void serialFlush()
 {
@@ -104,11 +98,18 @@ int getPatch()
   //Read response from serial
   startTime = millis();
   while ((Serial.available() < messageLen) && ((millis() - startTime) < TIMEOUT));
-  for (int i = 0; i < messageLen; i++)
+  if (Serial.available() < messageLen)
   {
-    inArray[i] = Serial.read();
+    //error correcting needed
   }
-  
+  else
+  {
+    for (int i = 0; i < messageLen; i++)
+    {
+      inArray[i] = Serial.read();
+    }
+  }
+    
   //Return the 8th bit (the patch number) + 1 (because patches start from 0)
   return ++inArray[messageLen-1];
 }
@@ -127,3 +128,15 @@ void incrementPatch()
   
 }
 
+void decrementPatch()
+{
+  int currentPatch = getPatch();
+  if (currentPatch > 1)
+  {
+    setPatch(--currentPatch);
+  }
+  else
+  {
+    setPatch(50);
+  }
+}
