@@ -1,6 +1,8 @@
 #include "Button.h" //include debounce and correct press reading
+#include <EEPROM.h>
 
 #define SIZEOF_ARRAY(arr) (sizeof(arr) / sizeof(arr[0])) //to compute sizeof or array passed to function
+#define TIMEOUT 500 //max millis to wait for response
 
 /*Commands declarations*/
 const byte patchChange = 0xC0;
@@ -20,12 +22,36 @@ void setup()
   /*Initialize serial @ MIDI baudrate 
   WARNING: serial does not work if you pass a variable to begin() --> must be a number!!*/
   Serial.begin(115200); 
-  delay(1000);
+  delay(2000); //change that!!
 
-  /*Send preamble to enable messages from the Zoom*/
-  sendMIDI(idReq, SIZEOF_ARRAY(idReq)); //maybe check response...
-  sendMIDI(enableEcho, SIZEOF_ARRAY(enableEcho));
-  delay(1000);  
+  // /*Send preamble to enable messages from the Zoom*/
+  // sendMIDI(idReq, SIZEOF_ARRAY(idReq)); //maybe check response...
+  // sendMIDI(enableEcho, SIZEOF_ARRAY(enableEcho));
+  // sendMIDI(infoReq, SIZEOF_ARRAY(infoReq));
+  serialFlush();  
+  // delay(2000);
+  
+  int messageLen = 15;
+  int inArray[messageLen] = {0};
+  // sendMIDI(idReq, SIZEOF_ARRAY(idReq));
+  // while (Serial.available() < messageLen);
+  // for (int i = 0; i < messageLen; i++)
+  // {
+    // inArray[i] = Serial.read();
+  // }
+  // for (int i = 0; i < messageLen; i++)
+  // {
+    // EEPROM.update(i, inArray[i]);
+  // }
+  
+  /*Print the saved response*/
+  Serial.println();
+  for (int i = 0; i < messageLen; i++)
+  {
+    Serial.print(EEPROM.read(i), HEX);
+    /*Serial.print(inArray[i], HEX);*/
+    Serial.print(' ');
+  }
 }
 
 void loop() 
@@ -35,31 +61,21 @@ void loop()
   {
     
   }*/
-  delay(5000);
-  increasePatch();
 }
 
 /* sendMIDI overloads */
 void sendMIDI(byte *command, size_t len) 
 {
-  int timeNow = millis();
-  
   for (int i = 0; i < len; i++)
   {
     Serial.write(command[i]);
   }
-
-  while (millis() < timeNow + 1);
 }
 
 void sendMIDI(byte command, byte data)
 {
-  int timeNow = millis();
-  
   Serial.write(command);
   Serial.write(data);
-
-  while (millis() < timeNow + 1);
 }
 
 /*void sendMIDI(byte command, byte data1, byte data2)
@@ -69,6 +85,12 @@ void sendMIDI(byte command, byte data)
   Serial.write(data2);
 }*/
 /*===================*/
+
+void serialFlush()
+{
+  while (Serial.available())
+    Serial.read();
+}
 
 void tunerToggle()
 {
@@ -88,6 +110,7 @@ void setPatch(int patchNumber)
 {
   byte num = (byte)(patchNumber-1);
   sendMIDI(patchChange, num);
+  // EEPROM.write(SAVED_PATCH_ADDR, getPatch());
 }
 
 int getPatch()
@@ -98,26 +121,25 @@ int getPatch()
   sendMIDI(infoReq, SIZEOF_ARRAY(infoReq));
 
   //Read from serial and save the 7th byte (the program number)
-  if(Serial.available()) 
-  {  
-    byteCount = 0;      
-    while (Serial.available() > 0)
+  while(!Serial.available());
+  byteCount = 0;      
+  while (Serial.available() > 0)
+  {
+    inByte = Serial.read();  //read Serial        
+    if (byteCount == 7)
     {
-      inByte = Serial.read();  //read Serial        
-      if (byteCount == 7)
-      {
-        currentPatch = ++inByte;
-      }
-      byteCount++;
+      currentPatch = inByte;
     }
+    byteCount++;
   }
   
-  return currentPatch;
+  return ++currentPatch;
 }
 
 void increasePatch()
 {
   int currentPatch = getPatch();
-  setPatch(++currentPatch);
+  currentPatch++;
+  setPatch(currentPatch);
 }
 
