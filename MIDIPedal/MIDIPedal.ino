@@ -34,7 +34,7 @@ void loop()
   }*/
   
   delay(2000);
-  increasePatch();
+  incrementPatch();
 }
 
 /* sendMIDI overloads */
@@ -108,9 +108,17 @@ int getPatch()
   return ++inArray[messageLen-1];
 }
 
-void increasePatch()
+void incrementPatch()
 {
   int currentPatch = getPatch();
-  setPatch(++currentPatch);
+  if (currentPatch < 50)
+  {
+    setPatch(++currentPatch);
+  }
+  else
+  {
+    setPatch(1);
+  }
+  
 }
 
