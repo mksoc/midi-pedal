@@ -1,8 +1,7 @@
 #include "Button.h" //include debounce and correct press reading
-#include <EEPROM.h>
 
 #define SIZEOF_ARRAY(arr) (sizeof(arr) / sizeof(arr[0])) //to compute sizeof or array passed to function
-#define TIMEOUT 500 //max millis to wait for response
+#define TIMEOUT 1000 //max millis to wait for response
 
 /*Commands declarations*/
 const byte patchChange = 0xC0;
@@ -23,6 +22,9 @@ void setup()
   WARNING: serial does not work if you pass a variable to begin() --> must be a number!!*/
   Serial.begin(115200); 
   delay(2000); //change that!!
+  
+  //Enable responses from Zoom
+  sendMIDI(enableEcho, SIZEOF_ARRAY(enableEcho));
 }
 
 void loop() 
@@ -35,6 +37,7 @@ void loop()
   
   delay(2000);
   incrementPatch();
+  
 }
 
 /* sendMIDI overloads */
@@ -90,6 +93,7 @@ int getPatch()
 {
   const int messageLen = 8;
   int inArray[messageLen];
+  unsigned long int startTime;
   
   //Flush residual input buffer
   serialFlush();  
@@ -98,7 +102,8 @@ int getPatch()
   sendMIDI(infoReq, SIZEOF_ARRAY(infoReq));
 
   //Read response from serial
-  while (Serial.available() < messageLen);
+  startTime = millis();
+  while ((Serial.available() < messageLen) && ((millis() - startTime) < TIMEOUT));
   for (int i = 0; i < messageLen; i++)
   {
     inArray[i] = Serial.read();
