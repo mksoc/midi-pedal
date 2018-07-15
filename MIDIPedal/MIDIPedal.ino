@@ -23,35 +23,6 @@ void setup()
   WARNING: serial does not work if you pass a variable to begin() --> must be a number!!*/
   Serial.begin(115200); 
   delay(2000); //change that!!
-
-  // /*Send preamble to enable messages from the Zoom*/
-  // sendMIDI(idReq, SIZEOF_ARRAY(idReq)); //maybe check response...
-  // sendMIDI(enableEcho, SIZEOF_ARRAY(enableEcho));
-  // sendMIDI(infoReq, SIZEOF_ARRAY(infoReq));
-  serialFlush();  
-  // delay(2000);
-  
-  int messageLen = 15;
-  int inArray[messageLen] = {0};
-  // sendMIDI(idReq, SIZEOF_ARRAY(idReq));
-  // while (Serial.available() < messageLen);
-  // for (int i = 0; i < messageLen; i++)
-  // {
-    // inArray[i] = Serial.read();
-  // }
-  // for (int i = 0; i < messageLen; i++)
-  // {
-    // EEPROM.update(i, inArray[i]);
-  // }
-  
-  /*Print the saved response*/
-  Serial.println();
-  for (int i = 0; i < messageLen; i++)
-  {
-    Serial.print(EEPROM.read(i), HEX);
-    /*Serial.print(inArray[i], HEX);*/
-    Serial.print(' ');
-  }
 }
 
 void loop() 
@@ -61,6 +32,9 @@ void loop()
   {
     
   }*/
+  
+  delay(2000);
+  increasePatch();
 }
 
 /* sendMIDI overloads */
@@ -88,7 +62,7 @@ void sendMIDI(byte command, byte data)
 
 void serialFlush()
 {
-  while (Serial.available())
+  while (Serial.available() > 0)
     Serial.read();
 }
 
@@ -110,36 +84,33 @@ void setPatch(int patchNumber)
 {
   byte num = (byte)(patchNumber-1);
   sendMIDI(patchChange, num);
-  // EEPROM.write(SAVED_PATCH_ADDR, getPatch());
 }
 
 int getPatch()
 {
-  int currentPatch, inByte, byteCount;
-
+  const int messageLen = 8;
+  int inArray[messageLen];
+  
+  //Flush residual input buffer
+  serialFlush();  
+  
   //Ask device for program number
   sendMIDI(infoReq, SIZEOF_ARRAY(infoReq));
 
-  //Read from serial and save the 7th byte (the program number)
-  while(!Serial.available());
-  byteCount = 0;      
-  while (Serial.available() > 0)
+  //Read response from serial
+  while (Serial.available() < messageLen);
+  for (int i = 0; i < messageLen; i++)
   {
-    inByte = Serial.read();  //read Serial        
-    if (byteCount == 7)
-    {
-      currentPatch = inByte;
-    }
-    byteCount++;
+    inArray[i] = Serial.read();
   }
   
-  return ++currentPatch;
+  //Return the 8th bit (the patch number) + 1 (because patches start from 0)
+  return ++inArray[messageLen-1];
 }
 
 void increasePatch()
 {
   int currentPatch = getPatch();
-  currentPatch++;
-  setPatch(currentPatch);
+  setPatch(++currentPatch);
 }
 
