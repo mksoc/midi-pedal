@@ -16,7 +16,7 @@ const byte enableEcho[] = {0xF0, 0x52, 0x00, 0x5F, 0x50, 0xF7}; // enable messag
 const byte infoReq[] = {0xF0, 0x52, 0x00, 0x5F, 0x33, 0xF7}; // request patch info
 
 // Pinout setup
-const int tunerPin = 2; // pin for tuner button, active high
+const int tunerPin = 2;
 const int patchUpPin;
 const int patchDownPin;
 const int memory0Pin;
@@ -25,7 +25,7 @@ const int memory2Pin;
 const int memory3Pin;
 
 // Button instantiations
-Button tunerButton = Button(tunerPin, DEBOUNCE_MS); // no pull-up and no invert defaults
+Button tunerButton = Button(tunerPin, DEBOUNCE_MS); // no pull-up and no invert (default)
 Button patchUpButton = Button(patchUpPin, DEBOUNCE_MS);
 Button patchDownButton = Button(patchDownPin, DEBOUNCE_MS);
 Button memory0Button = Button(memory0Pin, DEBOUNCE_MS);
@@ -59,15 +59,28 @@ void setup()
 
 void loop() 
 {
-  /*tunerButton.read();
-  if (tunerButton.wasPressed())
+  // Read buttons at beginning of loop
+  tunerButton.read();
+  patchUpButton.read();
+  patchDownButton.read();
+  
+  // Tuner button action
+  if (tunerButton.wasReleased())
   {
-    
-  }*/
+    tunerToggle();
+  }  
   
-  delay(2000);
-  decrementPatch();
+  // Patch up button action
+  if (patchUpButton.wasReleased())
+  {
+    incrementPatch();
+  }
   
+  // Patch down button action
+  if (patchDownButton.wasReleased())
+  {
+    decrementPatch();
+  }
 }
 
 // sendMIDI() overloads 
