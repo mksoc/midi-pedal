@@ -1,9 +1,13 @@
 #include "Button.h" //include debounce and correct press reading
+#include <EEPROM.h>
 
 #define SIZEOF_ARRAY(arr) (sizeof(arr) / sizeof(arr[0])) //to compute sizeof or array passed to function
 #define TIMEOUT 1000 //max millis to wait for response
+#define PULLUP true //use internal pull-up resistors
+#define INVERT true //use negative logic
+#define DEBOUNCE_MS 20 //debounce time [ms]
 
-/*Commands declarations*/
+//Commands declarations
 const byte patchChange = 0xC0;
 const byte tunerOn[] = {0xB0, 0x4A, 0x40}; //command sequence to turn on tuner
 const byte tunerOff[] = {0xB0, 0x4A, 0x3F}; //command sequence to turn off tuner
@@ -11,15 +15,24 @@ const byte idReq[] = {0xF0, 0x7E, 0x00, 0x06, 0x01, 0xF7}; //command sequence to
 const byte enableEcho[] = {0xF0, 0x52, 0x00, 0x5F, 0x50, 0xF7}; //enable messages from the Zoom
 const byte infoReq[] = {0xF0, 0x52, 0x00, 0x5F, 0x33, 0xF7}; //request patch info
 
-/*Tuner variables*/
+//Pinout setup
 const int tunerPin = 2; //pin for tuner button, active high
-Button tunerButton = Button(tunerPin, false, false, 25);
+const int patchUpPin;
+const int patchDownPin;
+const int memory0Pin;
+const int memory1Pin;
+const int memory2Pin;
+const int memory3Pin;
+
+//Tuner variables
+Button tunerButton = Button(tunerPin, PULLUP, INVERT, DEBOUNCE_MS);
 bool tunerActive = false; //tuner status
 
 void setup() 
 {
   /*Initialize serial @ MIDI baudrate 
-  WARNING: serial does not work if you pass a variable to begin() --> must be a number!!*/
+  WARNING: serial does not work if you pass a 
+  variable to begin() --> must be a number!!*/
   Serial.begin(115200); 
   delay(2000); //change that!!
   
@@ -40,7 +53,7 @@ void loop()
   
 }
 
-/* sendMIDI() overloads */
+//sendMIDI() overloads 
 void sendMIDI(byte *command, size_t len) 
 {
   for (int i = 0; i < len; i++)
@@ -55,7 +68,7 @@ void sendMIDI(byte command, byte data)
   Serial.write(data);
 }
 
-/*======================*/
+//--------------------
 
 void serialFlush()
 {
@@ -98,11 +111,12 @@ int getPatch()
   //Read response from serial
   startTime = millis();
   while ((Serial.available() < messageLen) && ((millis() - startTime) < TIMEOUT));
-  if (Serial.available() < messageLen)
+  if (Serial.available() < messageLen) //error state
   {
-    //error correcting needed
+    serialFlush();
+    //maybe blink a LED as error message
   }
-  else
+  else //correct state
   {
     for (int i = 0; i < messageLen; i++)
     {
