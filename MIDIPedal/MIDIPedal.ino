@@ -38,6 +38,10 @@ bool tunerActive = false; // tuner status
 
 void setup() 
 {
+  // Setup LED
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW); // ready LED turned off
+  
   // Initialize buttons
   tunerButton.begin();
   patchUpButton.begin();
@@ -55,6 +59,9 @@ void setup()
   
   // Enable responses from Zoom
   sendMIDI(enableEcho, SIZEOF_ARRAY(enableEcho));
+  
+  // Turn on ready LED
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 
 void loop() 
